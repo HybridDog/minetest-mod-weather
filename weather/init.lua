@@ -1,51 +1,38 @@
 -- Weather:
 -- * rain
 -- * snow
--- * wind (not implemented)
+-- * wind
 
 assert(minetest.add_particlespawner, "I told you to run the latest GitHub!")
 
-addvectors = function (v1, v2)
-	return {x=v1.x+v2.x, y=v1.y+v2.y, z=v1.z+v2.z}
-end
+weather_mod={
+	modpath=minetest.get_modpath("weather"),
+}
 
-save_weather = function ()
-	local file = io.open(minetest.get_worldpath().."/weather", "w+")
-	file:write(weather)
-	file:close()
-end
+weather = (function()
+	local file_name = minetest.get_worldpath() .. "/weather"
 
-read_weather = function ()
-	local file = io.open(minetest.get_worldpath().."/weather", "r")
-	if not file then return end
-	local readweather = file:read()
-	file:close()
-	return readweather
-end
+	minetest.register_on_shutdown(function()
+		local file = io.open(file_name, "w")
+		file:write(minetest.serialize(weather))
+		file:close()
+	end)
 
-weather = read_weather()
-
-minetest.register_globalstep(function(dtime)
-	if weather == "rain"
-	or weather == "snow" then
-		if math.random(1, 10000) == 1 then
-			weather = "none"
-			save_weather()
+	local file = io.open(file_name, "r")
+	if file ~= nil then
+		local readweather = minetest.deserialize(file:read("*a"))
+		file:close()
+		if type(readweather)~="table" then
+			return {type = "none", wind = 0}
 		end
-	else
-		local ran = math.random(1, 5000000)
-		if ran == 1 then
-			weather = "rain"
-			save_weather()
-		elseif ran == 2 then
-			weather = "snow"
-			save_weather()
-		end
+		return readweather
 	end
-end)
+	return {type = "none", wind = vector.new(0,0,0)}
+end) ()
 
-dofile(minetest.get_modpath("weather").."/rain.lua")
-dofile(minetest.get_modpath("weather").."/snow.lua")
-dofile(minetest.get_modpath("weather").."/command.lua")
+dofile(weather_mod.modpath.."/api.lua")
+dofile(weather_mod.modpath.."/rain.lua")
+dofile(weather_mod.modpath.."/snow.lua")
+dofile(weather_mod.modpath.."/command.lua")
 
-
+weather_mod.handle_lightning()

@@ -1,39 +1,13 @@
 -- Snow
-local spawnerdef = {
-	amount = 8,
-	time = 0.5,
-	minexptime = 3,
-	maxexptime = 15,
-	minsize = 0.8,
-	maxsize = 1.2,
-	collisiondetection = true,
-}
-minetest.register_globalstep(function(dtime)
-	if weather ~= "snow" then
-		return
-	end
-	for _, player in ipairs(minetest.get_connected_players()) do
-		local ppos = player:getpos()
-
-		-- Make sure player is not in a cave/house...
-		--if minetest.get_node_light(ppos, 0.5) ~= 15 then return end
-
-		spawnerdef.minpos = addvectors(ppos, {x=-9, y=7, z=-9})
-		spawnerdef.maxpos = addvectors(ppos, {x= 9, y=7, z= 9})
-
-		spawnerdef.minvel = {x=0, y= -1, z=0}
-		spawnerdef.maxvel = spawnerdef.minvel
-		spawnerdef.minacc = {x=0, y= 0, z=0}
-		spawnerdef.maxacc = spawnerdef.minacc
-
-		spawnerdef.playername = player:get_player_name()
-
-		for _,i in ipairs({"", "2"}) do
-			spawnerdef.texture = "weather_snow"..i..".png"
-			minetest.add_particlespawner(spawnerdef)
-		end
-	end
-end)
+weather_mod.register_downfall("weather:snow",{
+	min_pos = {x=-9, y=7, z=-9},
+	max_pos = {x= 9, y=7, z= 9},
+	falling_speed=5,
+	amount=10,
+	exptime=5,
+	size=25,
+	texture="weather_snow.png"
+})
 
 --[[local snow_box =
 {
@@ -62,11 +36,11 @@ minetest.register_abm({
 		if weather == "snow" then
 			if minetest.registered_nodes[node.name].drawtype == "normal"
 			or minetest.registered_nodes[node.name].drawtype == "allfaces_optional" then
-				local np = addvectors(pos, {x=0, y=1, z=0})
-				if minetest.get_node_light(np, 0.5) == 15
-				and minetest.get_node(np).name == "air" then
-					minetest.add_node(np, {name="weather:snow_cover"})
-				end
+				local np = vector.add(pos, {x=0, y=1, z=0})
+				if minetest.env:get_node_light(np, 0.5) == 15
+				and minetest.env:get_node(np).name == "air" then
+					minetest.env:add_node(np, {name="weather:snow_cover"})
+        end
 			end
 		end
 	end
